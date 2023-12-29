@@ -1,6 +1,8 @@
 import UIAbility from '@ohos.app.ability.UIAbility';
 import hilog from '@ohos.hilog';
 import window from '@ohos.window';
+import { AdModel } from '../models/AdModel';
+import { UserSettingClass } from '../utils/Settings';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want, launchParam) {
@@ -11,11 +13,23 @@ export default class EntryAbility extends UIAbility {
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onDestroy');
   }
 
-  onWindowStageCreate(windowStage: window.WindowStage) {
+  async onWindowStageCreate(windowStage: window.WindowStage): Promise<void>  {
     // Main window is created, set main page for this ability
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
-
-    windowStage.loadContent('pages/Index', (err, data) => {
+    const userSetting = new UserSettingClass(this.context)
+    const result = await new Promise<AdModel>((resolve) => {
+        setTimeout(() => {
+          resolve({
+            show: true,
+            duration: 10,
+            img: $r('app.media.start')
+          } as AdModel)
+        }, 500)
+    })
+    await userSetting.setSAd(result)
+    const adSetting = await userSetting.getAd()
+    const routerUrl = adSetting.show ? 'pages/Start/Start' : 'pages/Index'
+    windowStage.loadContent(routerUrl, (err, data) => {
       if (err.code) {
         hilog.error(0x0000, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err) ?? '');
         return;
